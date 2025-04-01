@@ -22,42 +22,38 @@
     </div>
 </template>
 
-<script>
+<script setup>
 import axios from 'axios';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-export default {
-    data() {
-        return {
-            username: '',
-            password: '',
-            errorMessage: ''
-        };
-    },
-    methods: {
-        async handleLogin() {
-            try {
-                const response = await axios.post('http://127.0.0.1:8000/api/auth/login', {
-                    username: this.username,
-                    password: this.password
-                });
+const router = useRouter();
+const username = ref('');
+const password = ref('');
+const errorMessage = ref('');
 
-                const token = response.data.data.token;
-                localStorage.setItem('authToken', token);
-                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+const handleLogin = async () => {
+    try {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+            username: username.value,
+            password: password.value
+        });
 
-                localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        const token = response.data.data.token;
+        localStorage.setItem('authToken', token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-                if (response.data.data.user.role_name === 'admin') {
-                    window.location.href = 'http://localhost:5173/admin/users';
-                } else {
-                    window.location.href = 'http://localhost:5173/registers';
-                }
+        localStorage.setItem('user', JSON.stringify(response.data.data.user));
 
-            } catch (error) {
-                console.error('Login error:', error);
-                this.errorMessage = error.response?.data?.message || 'An error occurred. Please try again.';
-            }
+        if (response.data.data.user.role_name === 'admin') {
+            router.push({ name: 'admin-users' });
+        } else {
+            router.push({ name: 'student-registers' });
         }
+
+    } catch (error) {
+        console.error('Login error:', error);
+        errorMessage.value = error.response?.data?.message || 'An error occurred. Please try again.';
     }
 };
 </script>
