@@ -12,9 +12,23 @@ const student = [
 
             // Danh sách đăng ký
             {
-                path: "registers",
+                path: "student-registers",
                 name: "student-registers",
                 component: () => import("../pages/student/registerusers/index.vue")
+            },
+
+            // Thời khóa biểu
+            {
+                path: "timetable",
+                name: "student-timetable",
+                component: () => import("../pages/student/timetable/index.vue")
+            },
+
+            // Thông tin cá nhân
+            {
+                path: "profile",
+                name: "student-profile",
+                component: () => import("../pages/student/profile/index.vue")
             },
         ]
     }

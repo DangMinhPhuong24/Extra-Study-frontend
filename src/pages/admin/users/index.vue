@@ -84,7 +84,7 @@ export default defineComponent({
         ];
 
         const getUsers = () => {
-            axios.get('http://127.0.0.1:8000/api/users')
+            axios.get(`${import.meta.env.VITE_API_URL}/users`)
                 .then((response) => {
                     users.value = response.data.data.map(user => ({
                         ...user,
@@ -108,7 +108,7 @@ export default defineComponent({
                 okText: 'Xoá',
                 okType: 'danger',
                 onOk() {
-                    axios.delete(`http://127.0.0.1:8000/api/delete_user?id=${id}`)
+                    axios.delete(`${import.meta.env.VITE_API_URL}/delete_user?id=${id}`)
                         .then((response) => {
                             message.success(response.data.message);
                             if (response.status == 200) {

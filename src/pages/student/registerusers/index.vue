@@ -102,10 +102,10 @@ export default {
     async fetchData() {
       try {
         const [registerRes, teacherRes, subjectRes, registerUsersRes] = await Promise.all([
-          axios.get("http://127.0.0.1:8000/api/register_all"),
-          axios.get("http://127.0.0.1:8000/api/teacher_all"),
-          axios.get("http://127.0.0.1:8000/api/subject_all"),
-          axios.get("http://127.0.0.1:8000/api/register_users"),
+          axios.get(`${import.meta.env.VITE_API_URL}/register_all`),
+          axios.get(`${import.meta.env.VITE_API_URL}/teacher_all`),
+          axios.get(`${import.meta.env.VITE_API_URL}/subject_all`),
+          axios.get(`${import.meta.env.VITE_API_URL}/register_users`),
         ]);
 
         this.registrations = registerRes.data.data;
@@ -154,10 +154,10 @@ export default {
         );
 
         if (hasRegisteredItems) {
-          await axios.put("http://127.0.0.1:8000/api/update_register_user", payload);
+          await axios.put(`${import.meta.env.VITE_API_URL}/update_register_user`, payload);
           alert("Cập nhật đăng ký thành công!");
         } else {
-          await axios.post("http://127.0.0.1:8000/api/create_register_user", payload);
+          await axios.post(`${import.meta.env.VITE_API_URL}/create_register_user`, payload);
           alert("Đăng ký mới thành công!");
         }
         this.selectedRegistrations = [];
@@ -169,7 +169,7 @@ export default {
     },
     async viewRegisterDetails(id) {
       try {
-        const response = await axios.get(`http://127.0.0.1:8000/api/detail_register_user?id=${id}`);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/detail_register_user?id=${id}`);
         this.registerDetails = response.data.data;
         this.visibleDetails = this.registerDetails.slice(0, 10);
         this.showModal = true;

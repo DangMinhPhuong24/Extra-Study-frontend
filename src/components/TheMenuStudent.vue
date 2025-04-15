@@ -10,8 +10,8 @@
             </router-link>
         </a-menu-item >
 
-        <a-menu-item key="student-home">
-            <router-link :to="{name: 'student-home'}">
+        <a-menu-item key="student-timetable">
+            <router-link :to="{name: 'student-timetable'}">
                 <span><SolutionOutlined class="me-1"/> Thời khóa biểu</span>
             </router-link>
         </a-menu-item >

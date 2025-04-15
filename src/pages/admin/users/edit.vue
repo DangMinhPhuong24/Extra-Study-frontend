@@ -207,7 +207,7 @@ export default defineComponent({
         });
 
         const getRoleAll = () => {
-            axios.get('http://127.0.0.1:8000/api/role_all')
+            axios.get(`${import.meta.env.VITE_API_URL}/role_all`)
                 .then((response) => {
                     roles.value = response.data.data;
                 })
@@ -217,7 +217,7 @@ export default defineComponent({
         };
 
         const getUserDetail = () => {
-            axios.get(`http://127.0.0.1:8000/api/detail_user/${route.params.id}`)
+            axios.get(`${import.meta.env.VITE_API_URL}/detail_user/${route.params.id}`)
                 .then((response) => {
                     users.username = response.data.data.username;
                     users.name = response.data.data.name;
@@ -242,7 +242,7 @@ export default defineComponent({
                 role_id: users.role_id,
             });
             
-            axios.put('http://127.0.0.1:8000/api/update_user', dataUpdate)
+            axios.put(`${import.meta.env.VITE_API_URL}/update_user`, dataUpdate)
                 .then((response) => {
                     console.log(response);
                     message.success(response.data.message);

@@ -6,14 +6,29 @@
             </div>
 
             <div class="col-10 col-sm-9 d-flex align-items-center justify-content-center justify-content-sm-start">
-                <img src="../assets/vue.svg" alt="Logo" height="32" width="34" class="ms-3 me-3">
-                <span class="d-none d-sm-flex">Trang chủ</span>
+                <i class="fa-solid fa-graduation-cap"></i> 
+                <span class="ms-1">Trang chủ</span>
             </div>
             
             <div class="col-sm-3 d-none d-sm-flex align-items-center justify-content-sm-end">
-                <!-- Hiển thị tên người dùng -->
-                <span>{{ userName }}</span>
-                <button @click="logout" class="btn btn-danger ms-3">Đăng xuất</button>
+                <div class="dropdown">
+                    <span class="dropdown-toggle" @click="toggleDropdown">
+                        {{ userName }} <i v-if="userName !== 'Khách'" class="fa-solid fa-chevron-down"></i>
+                    </span>
+                    <div v-if="isDropdownOpen && userName !== 'Khách'" class="dropdown-menu">
+                        <router-link :to="{ name: 'student-profile'}" class="dropdown-item">
+                            Thông tin cá nhân
+                        </router-link>
+                    </div>
+                </div>
+
+                <button v-if="userName !== 'Khách'" @click="logout" class="btn-login ms-3">
+                    Đăng xuất <i class="fa-solid fa-right-to-bracket"></i>
+                </button>
+
+                <button v-if="userName == 'Khách'" class="btn-login ms-3">
+                    <router-link class="btn-login" to="/">Đăng nhập <i class="fa-solid fa-right-to-bracket"></i></router-link>
+                </button>
             </div>
             <div class="col-1 d-flex d-sm-none align-items-center justify-content-center">
                 <span @click="showDrawerVisible()"><i class="fa-solid fa-user"></i></span>
@@ -28,34 +43,28 @@
     >
         <TheMenu/>
     </a-drawer>
-
-    <a-drawer
-        v-model:visible="visible"
-        title="Tài khoản"
-        placement="right"
-    >
-        <p>Some contents...</p>
-        <p>Some contents...</p>
-        <p>Some contents...</p>
-    </a-drawer>
 </template>
 
 <script setup>
 import TheMenu from "../components/TheMenu.vue";
 import { ref, computed } from 'vue';
+import "../styles/auth.css";
 
 const open = ref(false);
 const visible = ref(false);
+const isDropdownOpen = ref(false);
 
 const userName = computed(() => {
     const user = JSON.parse(localStorage.getItem('user'));
-
-    console.log('kkkk', user);
     return user ? user.name : 'Khách';
 });
 
+const toggleDropdown = () => {
+    isDropdownOpen.value = !isDropdownOpen.value;
+};
+
 const showDrawerOpen = () => {
-  open.value = true;
+    open.value = true;
 };
 
 const showDrawerVisible = () => {
@@ -64,7 +73,7 @@ const showDrawerVisible = () => {
 
 const logout = async () => {
     try {
-        await axios.post('http://127.0.0.1:8000/api/auth/logout', {}, {
+        await axios.post(`${import.meta.env.VITE_API_URL}/auth/logout`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             }
@@ -78,3 +87,38 @@ const logout = async () => {
     }
 };
 </script>
+
+<style scoped>
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-toggle {
+    cursor: pointer;
+    padding: 5px 1px;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: white;
+    min-width: 170px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    border-radius: 4px;
+    z-index: 1000;
+}
+
+.dropdown-item {
+    display: block;
+    padding: 8px 20px;
+    color: #333;
+    text-decoration: none;
+}
+
+.dropdown-item:hover {
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+</style>
