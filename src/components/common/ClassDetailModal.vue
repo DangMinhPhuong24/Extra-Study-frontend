@@ -156,10 +156,7 @@ const formatDate = (dateString) => {
 }
 
 .centered-loading {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    z-index: 1000;
+    position: absolute;
 }
 
 .detail-item {

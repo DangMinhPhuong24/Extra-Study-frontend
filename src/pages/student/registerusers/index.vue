@@ -138,7 +138,6 @@ label {
   font-weight: bold;
 }
 
-
 table {
   width: 100%;
   border-collapse: collapse;
