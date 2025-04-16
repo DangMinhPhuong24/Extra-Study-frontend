@@ -210,15 +210,4 @@ h3 {
   transform: translate(-50%, -50%);
   z-index: 1000;
 }
-
-.table-wrapper {
-  width: 100%;
-  transition: width 0.3s ease;
-  overflow-x: auto;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  min-height: 300px;
-  position: relative;
-}
 </style>
