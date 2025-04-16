@@ -6,42 +6,45 @@
                 <button class="close-button" @click="closeModal">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="detail-item">
-                    <span class="label">Môn học:</span>
-                    <span class="value">{{ eventData.title.split('\n')[0] }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="label">Thời gian:</span>
-                    <span class="value">{{ eventData.title.split('\n')[1] }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="label">Giảng viên:</span>
-                    <span class="value">{{ eventData.title.split('\n')[2] }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="label">Ngày:</span>
-                    <span class="value">{{ formatDate(eventData.start) }}</span>
-                </div>
-                <div>
-                    <span class="label">Danh sách học sinh:</span>
-                    <a-table 
-                        :dataSource="props.students" 
-                        :columns="props.columns" 
-                        :scroll="{ x: 0}"
-                        :pagination="false"
-                        size="small"
-                        bordered
-                    >
-                        <template #bodyCell="{ column, record }">
-                            <template v-if="column.key === 'key'">
-                                {{ record.key }}
+                <LoadingSpinner v-if="isLoading" :text="loadingText" class="centered-loading" />
+                <template v-else>
+                    <div class="detail-item">
+                        <span class="label">Môn học:</span>
+                        <span class="value">{{ eventData.title.split('\n')[0] }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Thời gian:</span>
+                        <span class="value">{{ eventData.title.split('\n')[1] }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Giảng viên:</span>
+                        <span class="value">{{ eventData.title.split('\n')[2] }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Ngày:</span>
+                        <span class="value">{{ formatDate(eventData.start) }}</span>
+                    </div>
+                    <div>
+                        <span class="label">Danh sách học sinh:</span>
+                        <a-table 
+                            :dataSource="props.students" 
+                            :columns="props.columns" 
+                            :scroll="{ x: 0}"
+                            :pagination="false"
+                            size="small"
+                            bordered
+                        >
+                            <template #bodyCell="{ column, record }">
+                                <template v-if="column.key === 'key'">
+                                    {{ record.key }}
+                                </template>
+                                <template v-else>
+                                    {{ record[column.dataIndex] }}
+                                </template>
                             </template>
-                            <template v-else>
-                                {{ record[column.dataIndex] }}
-                            </template>
-                        </template>
-                    </a-table>
-                </div>
+                        </a-table>
+                    </div>
+                </template>
             </div>
             <div class="modal-footer">
                 <button class="cancel-button" @click="closeModal">Đóng</button>
@@ -51,7 +54,8 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, ref } from 'vue';
+import { defineProps, defineEmits } from 'vue';
+import LoadingSpinner from './LoadingSpinner.vue';
 
 const props = defineProps({
     show: {
@@ -69,6 +73,14 @@ const props = defineProps({
     columns: {
         type: Array,
         default: () => []
+    },
+    isLoading: {
+        type: Boolean,
+        default: false
+    },
+    loadingText: {
+        type: String,
+        default: 'Đang tải thông tin...'
     }
 });
 
@@ -110,6 +122,8 @@ const formatDate = (dateString) => {
     max-width: 500px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    position: relative;
+    min-height: 200px;
 }
 
 .modal-header {
@@ -137,6 +151,15 @@ const formatDate = (dateString) => {
 
 .modal-body {
     padding: 20px;
+    position: relative;
+    min-height: 150px;
+}
+
+.centered-loading {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 1000;
 }
 
 .detail-item {

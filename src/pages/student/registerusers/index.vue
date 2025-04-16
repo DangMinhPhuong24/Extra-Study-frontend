@@ -1,7 +1,7 @@
 <template>
   <div class="registration-list">
     <h1>Danh sách đăng ký môn học
-      <button @click="registerSelected" :disabled="selectedRegistrations.length === 0">
+      <button @click="registerSelected" :disabled="selectedRegistrations.length === 0 || isLoading">
         Đăng ký
       </button>
     </h1>
@@ -9,7 +9,7 @@
     <!-- Bộ lọc -->
     <div class="filters">
       <label for="teacher">Giáo viên:</label>
-      <select v-model="selectedTeacher" @change="filterData">
+      <select v-model="selectedTeacher" @change="filterData" :disabled="isLoading">
         <option value="">Tất cả</option>
         <option v-for="teacher in teachers" :key="teacher.id" :value="teacher.id">
           {{ teacher.name }}
@@ -17,7 +17,7 @@
       </select>
 
       <label for="subject">Môn học:</label>
-      <select v-model="selectedSubject" @change="filterData">
+      <select v-model="selectedSubject" @change="filterData" :disabled="isLoading">
         <option value="">Tất cả</option>
         <option v-for="subject in subjects" :key="subject.id" :value="subject.id">
           {{ subject.subject_name }}
@@ -26,182 +26,106 @@
     </div>
 
     <!-- Danh sách đăng ký -->
-    <table>
-      <thead>
-        <tr>
-          <th><input type="checkbox" @change="toggleAll" v-model="selectAll"></th>
-          <th>STT</th>
-          <th>Lớp</th>
-          <th>Số lượng</th>
-          <th>Còn lại</th>
-          <th>Môn học</th>
-          <th>Giáo viên</th>
-          <th>Giờ học</th>
-          <th>Hành động</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(registration, index) in filteredRegistrations" :key="registration.id">
-          <td>
-            <input type="checkbox" v-model="selectedRegistrations" :value="registration.id">
-          </td>
-          <td>{{ index + 1 }}</td>
-          <td>{{ registration.class_name }}</td>
-          <td>{{ registration.quantity }}</td>
-          <td>{{ registration.remaining_quantity }}</td>
-          <td>{{ registration.subject_name }}</td>
-          <td>{{ registration.teacher_name }}</td>
-          <td>
-            Từ {{ registration.from_hour }} đến {{ registration.to_hour }},
-            Ngày bắt đầu {{ registration.from_date }} - Ngày kết thúc {{ registration.to_date }}
-          </td>
-          <td>
-            <i class="fa-regular fa-eye" @click="viewRegisterDetails(registration.id)"></i>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-wrapper" :class="{ 'menu-collapsed': isMenuCollapsed }">
+      <LoadingSpinner v-if="isLoading" :text="loadingText" class="centered-loading" />
+      <table v-else>
+        <thead>
+          <tr>
+            <th><input type="checkbox" @change="toggleAll" v-model="selectAll"></th>
+            <th>STT</th>
+            <th>Lớp</th>
+            <th>Số lượng</th>
+            <th>Còn lại</th>
+            <th>Môn học</th>
+            <th>Giáo viên</th>
+            <th>Giờ học</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(registration, index) in filteredRegistrations" :key="registration.id">
+            <td>
+              <input type="checkbox" v-model="selectedRegistrations" :value="registration.id">
+            </td>
+            <td>{{ index + 1 }}</td>
+            <td>{{ registration.class_name }}</td>
+            <td>{{ registration.quantity }}</td>
+            <td>{{ registration.remaining_quantity }}</td>
+            <td>{{ registration.subject_name }}</td>
+            <td>{{ registration.teacher_name }}</td>
+            <td>
+              Từ {{ registration.from_hour }} đến {{ registration.to_hour }},
+              Ngày bắt đầu {{ registration.from_date }} - Ngày kết thúc {{ registration.to_date }}
+            </td>
+            <td>
+              <i class="fa-regular fa-eye" @click="viewRegisterDetails(registration.id)"></i>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <!-- Modal -->
     <div v-if="showModal" class="modal-overlay" @click="closeModal">
       <div class="modal" @click.stop>
         <h3>Chi tiết đăng ký</h3>
-        <div v-for="(detail, index) in visibleDetails" :key="detail.id">
-          <p>{{ detail.student_name }}</p>
-        </div>
-        <button v-if="hasMoreDetails" @click="loadMoreDetails">Xem thêm</button>
-        <button @click="closeModal">Đóng</button>
+        <LoadingSpinner v-if="isLoading" :text="loadingText" />
+        <template v-else>
+          <div v-for="(detail, index) in visibleDetails" :key="detail.id">
+            <p>{{ detail.student_name }}</p>
+          </div>
+          <button v-if="hasMoreDetails" @click="loadMoreDetails">Xem thêm</button>
+          <button @click="closeModal">Đóng</button>
+        </template>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-import axios from "axios";
+<script setup>
+import { onMounted, inject } from 'vue';
+import { useMenu } from '../../../stores/use-menu';
+import { useRegisterUsers } from '../../../composables/useRegisterUsers';
+import LoadingSpinner from '../../../components/common/LoadingSpinner.vue';
 
-export default {
-  data() {
-    return {
-      registrations: [],
-      teachers: [],
-      subjects: [],
-      filteredRegistrations: [],
-      selectedTeacher: '',
-      selectedSubject: '',
-      selectAll: false,
-      selectedRegistrations: [],
-      alreadyRegistered: [],
-      registerDetails: [],
-      visibleDetails: [],
-      showModal: false,
-      detailsIndex: 0,
-      hasMoreDetails: false,
-    };
-  },
-  methods: {
-    async fetchData() {
-      try {
-        const [registerRes, teacherRes, subjectRes, registerUsersRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_URL}/register_all`),
-          axios.get(`${import.meta.env.VITE_API_URL}/teacher_all`),
-          axios.get(`${import.meta.env.VITE_API_URL}/subject_all`),
-          axios.get(`${import.meta.env.VITE_API_URL}/register_users`),
-        ]);
+const store = useMenu();
+const isMenuCollapsed = inject('isMenuCollapsed', false);
+const {
+  registrations,
+  teachers,
+  subjects,
+  filteredRegistrations,
+  selectedTeacher,
+  selectedSubject,
+  selectAll,
+  selectedRegistrations,
+  alreadyRegistered,
+  registerDetails,
+  visibleDetails,
+  showModal,
+  detailsIndex,
+  hasMoreDetails,
+  fetchData,
+  filterData,
+  toggleAll,
+  registerSelected,
+  viewRegisterDetails,
+  loadMoreDetails,
+  closeModal,
+  isLoading,
+  loadingText
+} = useRegisterUsers();
 
-        this.registrations = registerRes.data.data;
-        this.teachers = teacherRes.data.data;
-        this.subjects = subjectRes.data.data;
-        this.filteredRegistrations = this.registrations;
-        this.alreadyRegistered = registerUsersRes.data.data.map(item => item.register_id);
-        this.selectedRegistrations = [...this.alreadyRegistered];
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    },
-    filterData() {
-      this.filteredRegistrations = this.registrations.filter((registration) => {
-        const matchTeacher =
-          this.selectedTeacher === "" ||
-          registration.teacher_id === this.selectedTeacher;
-        const matchSubject =
-          this.selectedSubject === "" ||
-          registration.subject_id === this.selectedSubject;
-
-        return matchTeacher && matchSubject;
-      });
-
-      this.selectedRegistrations = this.selectedRegistrations.filter((id) =>
-        this.filteredRegistrations.some((registration) => registration.id === id)
-      );
-    },
-    toggleAll() {
-      if (this.selectAll) {
-        this.selectedRegistrations = this.filteredRegistrations.map(
-          (registration) => registration.id
-        );
-      } else {
-        this.selectedRegistrations = [];
-      }
-    },
-    async registerSelected() {
-      try {
-        const payload = {
-          register_ids: this.selectedRegistrations,
-        };
-
-        const hasRegisteredItems = this.selectedRegistrations.some(id =>
-          this.alreadyRegistered.includes(id)
-        );
-
-        if (hasRegisteredItems) {
-          await axios.put(`${import.meta.env.VITE_API_URL}/update_register_user`, payload);
-          alert("Cập nhật đăng ký thành công!");
-        } else {
-          await axios.post(`${import.meta.env.VITE_API_URL}/create_register_user`, payload);
-          alert("Đăng ký mới thành công!");
-        }
-        this.selectedRegistrations = [];
-        this.selectAll = false;
-      } catch (error) {
-        console.error("Error registering:", error);
-        alert("Có lỗi xảy ra khi đăng ký.");
-      }
-    },
-    async viewRegisterDetails(id) {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/detail_register_user?id=${id}`);
-        this.registerDetails = response.data.data;
-        this.visibleDetails = this.registerDetails.slice(0, 10);
-        this.showModal = true;
-        this.detailsIndex = 10;
-        this.hasMoreDetails = this.registerDetails.length > 10;
-      } catch (error) {
-        console.error("Error fetching registration details:", error);
-        alert("Có lỗi xảy ra khi lấy chi tiết đăng ký.");
-      }
-    },
-    loadMoreDetails() {
-      const nextDetails = this.registerDetails.slice(this.detailsIndex, this.detailsIndex + 10);
-      this.visibleDetails.push(...nextDetails);
-      this.detailsIndex += 10;
-
-      this.hasMoreDetails = this.detailsIndex < this.registerDetails.length;
-    },
-    closeModal() {
-      this.showModal = false;
-    },
-  },
-  mounted() {
-    this.fetchData();
-  },
-};
+onMounted(() => {
+  store.onSelectedKeys(["student-registerusers"]);
+  fetchData();
+});
 </script>
 
 <style scoped>
 .registration-list {
-  max-width: 800px;
-  margin: 0 auto;
-  font-family: Arial, sans-serif;
+  padding: 20px;
+  position: relative;
 }
 
 .filters {
@@ -214,6 +138,7 @@ label {
   font-weight: bold;
 }
 
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -223,7 +148,7 @@ th,
 td {
   border: 1px solid #ccc;
   padding: 8px;
-  text-align: left;
+  text-align: center;
 }
 
 th {
@@ -268,6 +193,7 @@ button:hover:not(:disabled) {
   border-radius: 8px;
   max-width: 500px;
   width: 100%;
+  position: relative;
 }
 
 button:hover {
@@ -276,5 +202,24 @@ button:hover {
 
 h3 {
   margin-top: 0;
+}
+
+.centered-loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+}
+
+.table-wrapper {
+  width: 100%;
+  transition: width 0.3s ease;
+  overflow-x: auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-height: 300px;
+  position: relative;
 }
 </style>
