@@ -19,22 +19,35 @@ export function useRegisterUsers() {
     const detailsIndex = ref(0);
     const hasMoreDetails = ref(false);
 
-    const fetchData = async () => {
+    // Pagination
+    const currentPage = ref(1);
+    const totalPages = ref(1);
+    const totalRecords = ref(0);
+
+    const fetchData = async (page = 1) => {
         try {
             startLoading('Đang tải dữ liệu...');
-            const [registerRes, teacherRes, subjectRes, registerUsersRes] = await Promise.all([
-                axios.get(`${import.meta.env.VITE_API_URL}/register_all`),
+            const [teacherRes, subjectRes] = await Promise.all([
                 axios.get(`${import.meta.env.VITE_API_URL}/teacher_all`),
                 axios.get(`${import.meta.env.VITE_API_URL}/subject_all`),
-                axios.get(`${import.meta.env.VITE_API_URL}/register_users`),
             ]);
 
-            registrations.value = registerRes.data.data;
             teachers.value = teacherRes.data.data;
             subjects.value = subjectRes.data.data;
-            filteredRegistrations.value = registrations.value;
+
+            // Fetch registrations with pagination
+            const registerRes = await axios.get(`${import.meta.env.VITE_API_URL}/registers?page=${page}&register_user=`);
+            registrations.value = registerRes.data.data;
+            totalPages.value = registerRes.data.total_pages || 1;
+            totalRecords.value = registerRes.data.total_records || 0;
+            currentPage.value = page;
+
+            // Fetch registered users
+            const registerUsersRes = await axios.get(`${import.meta.env.VITE_API_URL}/register_users`);
             alreadyRegistered.value = registerUsersRes.data.data.map(item => item.register_id);
             selectedRegistrations.value = [...alreadyRegistered.value];
+            filteredRegistrations.value = registrations.value;
+
         } catch (error) {
             console.error("Error fetching data:", error);
         } finally {
@@ -57,6 +70,10 @@ export function useRegisterUsers() {
         selectedRegistrations.value = selectedRegistrations.value.filter((id) =>
             filteredRegistrations.value.some((registration) => registration.id === id)
         );
+    };
+
+    const changePage = async (page) => {
+        await fetchData(page);
     };
 
     const toggleAll = () => {
@@ -89,6 +106,7 @@ export function useRegisterUsers() {
             }
             selectedRegistrations.value = [];
             selectAll.value = false;
+            await fetchData(currentPage.value); // Refresh current page
         } catch (error) {
             console.error("Error registering:", error);
             alert("Có lỗi xảy ra khi đăng ký.");
@@ -118,7 +136,6 @@ export function useRegisterUsers() {
         const nextDetails = registerDetails.value.slice(detailsIndex.value, detailsIndex.value + 10);
         visibleDetails.value.push(...nextDetails);
         detailsIndex.value += 10;
-
         hasMoreDetails.value = detailsIndex.value < registerDetails.value.length;
     };
 
@@ -141,8 +158,12 @@ export function useRegisterUsers() {
         showModal,
         detailsIndex,
         hasMoreDetails,
+        currentPage,
+        totalPages,
+        totalRecords,
         fetchData,
         filterData,
+        changePage,
         toggleAll,
         registerSelected,
         viewRegisterDetails,
