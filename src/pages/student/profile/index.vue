@@ -3,24 +3,31 @@
         <a-card title="Cập nhật tài khoản" style="width: 100%">
             <div class="row">
                 <div class="col-12 col-sm-4">
-
                     <div class="row">
                         <div class="col-12 d-flex justify-content-center mb-3">
                             <a-avatar shape="square" :size="250">
                                 <template #icon>
-                                    <img src="../../../assets/avatar.jpg" alt="Avatar">
+                                    <img :src=" 
+                                        'https://s3.ap-southeast-1.amazonaws.com/bucketupload.dangminhphuong/' + avatarPreview 
+                                        || '../../assets/avatar.jpg'" alt="Avatar">
                                 </template>
                             </a-avatar>
                         </div>
 
                         <div class="col-12 d-flex justify-content-center">
-                            <a-button type="primary">
+                            <input 
+                                type="file" 
+                                ref="fileInput"
+                                @change="handleFileChange"
+                                accept="image/*"
+                                style="display: none"
+                            >
+                            <a-button type="primary" @click="triggerFileInput">
                                 <i class="fa-solid fa-plus me-2"></i>
                                 <span> Chọn ảnh </span>
                             </a-button>
                         </div>
                     </div>
-
                 </div>
                 <div class="col-12 col-sm-8">
                     <div class="row mb-3">
@@ -138,7 +145,6 @@
                             <span>Cập nhập</span>
                         </a-button>
                     </div>
-
                 </div>
             </div>
         </a-card>
@@ -146,7 +152,6 @@
 </template>
 
 <script>
-
 import { defineComponent, ref, reactive, toRefs } from 'vue';
 import { useRouter } from 'vue-router';
 import { useRoute } from 'vue-router';
@@ -155,11 +160,14 @@ import { useMenu } from '../../../stores/use-menu';
 
 export default defineComponent({
     setup() {
-        useMenu().onSelectedKeys(["admin-users"])
+        useMenu().onSelectedKeys(["student-profile"])
 
         const router = useRouter();
         const route = useRoute();
         const errors = ref([]);
+        const fileInput = ref(null);
+        const avatarPreview = ref(null);
+        const selectedFile = ref(null);
         const users = reactive({
             id: "",
             username: "",
@@ -171,6 +179,38 @@ export default defineComponent({
             change_password_at: ""
         });
 
+        const triggerFileInput = () => {
+            fileInput.value.click();
+        };
+
+        const handleFileChange = (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile.value = file;
+                // Create preview URL
+                avatarPreview.value = URL.createObjectURL(file);
+            }
+        };
+
+        const uploadAvatar = async () => {
+            if (!selectedFile.value) return;
+            
+            const formData = new FormData();
+            formData.append('avatar', selectedFile.value);
+
+            try {
+                const response = await axios.post(`${import.meta.env.VITE_API_URL}/upload_avatar`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+                message.success('Cập nhật ảnh đại diện thành công');
+            } catch (error) {
+                console.error('Error uploading avatar:', error);
+                message.error('Cập nhật ảnh đại diện thất bại');
+            }
+        };
+
         const getUserDetail = () => {
             axios.get(`${import.meta.env.VITE_API_URL}/auth/profile`)
                 .then((response) => {
@@ -179,13 +219,16 @@ export default defineComponent({
                     users.name = response.data.data.name;
                     users.email = response.data.data.email;
                     users.change_password_at = response.data.data.change_password_at ?? "Bạn chưa đổi mật khẩu lần nào";
+                    if (response.data.data.avatar) {
+                        avatarPreview.value = response.data.data.avatar;
+                    }
                 })
                 .catch((error) => {
                     console.log(error);
                 });
         };
 
-        const updateUsers = () => {
+        const updateUsers = async () => {
             const dataUpdate = reactive({
                 id: users.id,
                 username: users.username,
@@ -195,24 +238,33 @@ export default defineComponent({
                 new_password_confirmation: users.new_password_confirmation,
             });
             
-            axios.put(`${import.meta.env.VITE_API_URL}/update_user`, dataUpdate)
-                .then((response) => {
-                    console.log(response);
-                    message.success(response.data.message);
-                    router.push({ name: "admin-users" });
-                })
-                .catch((error) => {
-                    console.log(error);
-                    errors.value = error.response.data.message;
-                });
-        }
+            try {
+                // Update user info
+                const response = await axios.put(`${import.meta.env.VITE_API_URL}/update_user`, dataUpdate);
+                message.success(response.data.message);
+
+                // Upload avatar if selected
+                if (selectedFile.value) {
+                    await uploadAvatar();
+                }
+
+                router.push({ name: "student-profile" });
+            } catch (error) {
+                console.log(error);
+                errors.value = error.response.data.message;
+            }
+        };
 
         getUserDetail();
 
         return {
             errors,
             ...toRefs(users),
-            updateUsers
+            updateUsers,
+            fileInput,
+            triggerFileInput,
+            handleFileChange,
+            avatarPreview
         }
     }
 });
