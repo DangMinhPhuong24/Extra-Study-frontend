@@ -16,6 +16,12 @@
             </router-link>
         </a-menu-item >
 
+        <a-menu-item key="Chat">
+            <router-link :to="{name: 'Chat'}">
+                <span><WechatOutlined class="me-1"/> Chat</span>
+            </router-link>
+        </a-menu-item >
+
         <a-menu-item key="student-home">
             <router-link :to="{name: 'student-home'}">
                 <span><SettingOutlined class="me-1"/> Cài đặt</span>
@@ -25,7 +31,7 @@
 </template>
 
 <script setup>
-import { UserOutlined, SolutionOutlined, SettingOutlined } from '@ant-design/icons-vue';
+import { UserOutlined, SolutionOutlined, WechatOutlined, SettingOutlined } from '@ant-design/icons-vue';
 import { reactive } from 'vue';
 import { useMenu } from '../stores/use-menu';
 import { storeToRefs } from 'pinia';

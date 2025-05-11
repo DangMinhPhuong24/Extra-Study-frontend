@@ -30,6 +30,13 @@ const student = [
                 name: "student-profile",
                 component: () => import("../pages/student/profile/index.vue")
             },
+
+            // Thông tin cá nhân
+            {
+                path: "chat",
+                name: "Chat",
+                component: () => import("../pages/Chat.vue")
+            },
         ]
     }
 ];
