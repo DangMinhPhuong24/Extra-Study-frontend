@@ -36,12 +36,24 @@ export function useChat() {
             stopLoading();
         }
     };
-
+    const currentUser = JSON.parse(localStorage.getItem('user'));
     const sendMessage = async () => {
         if (!newMessage.value.trim() || !selectedUser.value) return;
     
         try {
-            console.log('chat', newMessage.value)
+            const tempMessage = {
+                content: newMessage.value,
+                sender: { id: currentUser?.id },
+                created_at: new Intl.DateTimeFormat('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                }).format(new Date())
+            };
+            chatHistory.value.push(tempMessage);
+
             const response = await axios.post(`${import.meta.env.VITE_API_URL}/send_message?receiver_id=${selectedUser.value.id}&content=${encodeURIComponent(newMessage.value)}`);
             if (response.data.status_code === 201) {
                 newMessage.value = '';
