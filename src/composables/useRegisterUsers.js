@@ -90,7 +90,7 @@ export function useRegisterUsers() {
         try {
             startLoading('Đang xử lý đăng ký...');
             const payload = {
-                register_ids: selectedRegistrations.value,
+                register_ids: [...new Set(selectedRegistrations.value)],
             };
 
             const hasRegisteredItems = selectedRegistrations.value.some(id =>
