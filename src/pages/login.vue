@@ -9,7 +9,7 @@
                     <h2 class="auth-title">Đăng nhập</h2>
                     <form @submit.prevent="handleLogin">
                         <FormInput
-                            label="Tên tài khoản"
+                            label="Tên tài khoản (student1)"
                             id="username"
                             v-model="username"
                             placeholder="Nhập tên tài khoản"
@@ -17,7 +17,7 @@
                         />
 
                         <FormInput
-                            label="Mật khẩu"
+                            label="Mật khẩu (Student@12)"
                             id="password"
                             v-model="password"
                             :type="showPassword ? 'text' : 'password'"

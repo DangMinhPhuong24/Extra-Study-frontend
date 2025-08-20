@@ -35,7 +35,8 @@ export function useTimetable() {
             eventsData.value = indexRes.data.data;
             
             return eventsData.value.map(timetable => ({
-                id: timetable.register_id.toString(),
+                id: timetable.id,
+                register_id: timetable.register_id.toString(),
                 title: `${timetable.subject_name}\n ${timetable.from_hour} - ${timetable.to_hour}\n ${timetable.teacher_name}`,
                 start: `${timetable.from_date_origin}T${timetable.from_hour}`,
                 end: `${timetable.from_date_origin}T${timetable.to_hour}`,
@@ -57,7 +58,7 @@ export function useTimetable() {
             selectedEvent.value = info.event;
             showModal.value = true;
             
-            const eventId = info.event.id;
+            const eventId = info.event.extendedProps.register_id;
             console.log('Event ID:', eventId);
             
             if (eventId) {
