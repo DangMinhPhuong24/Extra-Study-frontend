@@ -24,13 +24,14 @@ jobs:
           npm install
           npm run build
 
-      - name: Deploy dist via SFTP
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      - name: Deploy dist via rsync
+        uses: appleboy/ssh-action@v0.1.10
         with:
+          host: ${{ secrets.CLOUDWAYS_HOST }}
           username: ${{ secrets.CLOUDWAYS_USER }}
-          server: ${{ secrets.CLOUDWAYS_HOST }}
+          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
           port: 22
-          ssh_private_key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
-          local_path: "dist/*"
-          remote_path: "/home/master/applications/vfwqmsqqzk/public_html"
-          sftp_only: true
+          script: |
+            rsync -avz --delete \
+              -e "ssh -i $HOME/.ssh/id_rsa -p 22 -o StrictHostKeyChecking=no" \
+              ./dist/ /home/master/applications/vfwqmsqqzk/public_html/
