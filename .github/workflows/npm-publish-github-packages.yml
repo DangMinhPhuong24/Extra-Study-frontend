@@ -1,0 +1,35 @@
+# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
+# For more information see: https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
+
+name: Deploy FE to Cloudways
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies and build
+        run: |
+          npm install
+          npm run build
+
+      - uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          username: ${{ secrets.CLOUDWAYS_USER }}
+          server: ${{ secrets.CLOUDWAYS_HOST }}
+          port: 22
+          ssh_private_key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
+          local_path: "dist/*"
+          remote_path: "/home/1517904.cloudwaysapps.com/vfwqmsqqzk/public_html/"
+          sftp_only: true
