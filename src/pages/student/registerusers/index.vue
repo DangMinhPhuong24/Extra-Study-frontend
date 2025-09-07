@@ -2,7 +2,7 @@
   <div class="registration-list">
     <h1>Danh sách đăng ký môn học
       <button @click="registerSelected" :disabled="selectedRegistrations.length === 0 || isLoading">
-        Đăng ký
+        Đăng ký môn học
       </button>
     </h1>
 
